@@ -24,6 +24,13 @@ dependencies {
     compile "io.vertx:vertx-core:4.0.0-milestone3"
     compile "io.vertx:vertx-lang-kotlin:4.0.0-milestone3"
     compile 'io.vertx:vertx-lang-kotlin-coroutines:4.0.0-milestone3'
+
+    compile 'io.vertx:vertx-web:4.0.0-milestone3'
+    compile 'io.vertx:vertx-jdbc-client:4.0.0-milestone3'
+    compile 'io.vertx:vertx-auth-jdbc:4.0.0-milestone3'
+
+    compile 'mysql:mysql-connector-java:8.0.17'
+
 }
 
 compileKotlin {
