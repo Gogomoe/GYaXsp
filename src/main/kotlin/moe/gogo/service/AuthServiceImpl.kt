@@ -18,12 +18,16 @@ import moe.gogo.CoroutineService
 import moe.gogo.ServiceException
 import moe.gogo.ServiceRegistry
 
-class AuthServiceImpl(val dbClient: JDBCClient, val auth: JDBCAuth, context: Context) :
-    CoroutineService(context), AuthService {
+class AuthServiceImpl(context: Context) : CoroutineService(context), AuthService {
 
     private val log = LoggerFactory.getLogger(AuthServiceImpl::class.java)
 
+    lateinit var dbClient: JDBCClient
+    lateinit var auth: JDBCAuth
+
     override suspend fun start(registry: ServiceRegistry) {
+        dbClient = registry[DatabaseService::class.java].client()
+        auth = JDBCAuth.create(registry.vertx(), dbClient)
         createTables()
     }
 

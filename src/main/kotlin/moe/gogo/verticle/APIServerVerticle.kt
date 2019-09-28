@@ -1,7 +1,5 @@
 package moe.gogo.verticle
 
-import io.vertx.ext.auth.jdbc.JDBCAuth
-import io.vertx.ext.jdbc.JDBCClient
 import io.vertx.ext.web.Router
 import io.vertx.ext.web.handler.BodyHandler
 import io.vertx.ext.web.handler.SessionHandler
@@ -12,6 +10,8 @@ import kotlinx.coroutines.launch
 import moe.gogo.ServiceRegistry
 import moe.gogo.service.AuthService
 import moe.gogo.service.AuthServiceImpl
+import moe.gogo.service.DatabaseService
+import moe.gogo.service.DatabaseServiceImpl
 
 class APIServerVerticle : CoroutineVerticle() {
 
@@ -19,12 +19,11 @@ class APIServerVerticle : CoroutineVerticle() {
 
     override suspend fun start() = coroutineScope {
 
-        val registry = ServiceRegistry.create()
+        val registry = ServiceRegistry.create(vertx, context)
 
-        val dbConfig = config.getJsonObject("db_config")
-        val dbClient = JDBCClient.createShared(vertx, dbConfig)
-
-        val auth = JDBCAuth.create(vertx, dbClient)
+        val databaseService = DatabaseServiceImpl()
+        databaseService.start(registry)
+        registry[DatabaseService::class.java] = databaseService
 
         restAPI = Router.router(vertx)
 
@@ -37,7 +36,7 @@ class APIServerVerticle : CoroutineVerticle() {
         }
 
         val services = listOf(
-            AuthService::class.java to AuthServiceImpl(dbClient, auth, context)
+            AuthService::class.java to AuthServiceImpl(context)
         )
 
         services.forEach { (clazz, service) ->

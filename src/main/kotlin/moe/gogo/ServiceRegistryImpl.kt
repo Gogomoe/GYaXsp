@@ -1,6 +1,13 @@
 package moe.gogo
 
-class ServiceRegistryImpl : ServiceRegistry {
+import io.vertx.core.Context
+import io.vertx.core.Vertx
+
+class ServiceRegistryImpl(private val vertx: Vertx, private val context: Context) : ServiceRegistry {
+
+    override fun vertx(): Vertx = vertx
+
+    override fun context(): Context = context
 
     private val services: MutableMap<Class<*>, Service> = mutableMapOf()
 
