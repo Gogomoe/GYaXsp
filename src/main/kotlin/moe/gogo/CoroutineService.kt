@@ -11,7 +11,7 @@ import io.vertx.kotlin.coroutines.dispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
-abstract class CoroutineService(val context: Context) {
+abstract class CoroutineService(val context: Context) : Service {
 
     companion object {
         private val log = LoggerFactory.getLogger(CoroutineService::class.java)
@@ -20,8 +20,6 @@ abstract class CoroutineService(val context: Context) {
     val coroutineScope: CoroutineScope = CoroutineScope(context.dispatcher())
 
     abstract fun route(router: Router)
-
-    abstract suspend fun start()
 
     open fun Route.coroutineHandler(fn: suspend (RoutingContext) -> Unit) {
         handler { ctx ->
