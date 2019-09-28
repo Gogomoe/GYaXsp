@@ -2,6 +2,6 @@ package moe.gogo
 
 interface Service {
 
-    suspend fun start()
+    suspend fun start(registry: ServiceRegistry)
 
 }

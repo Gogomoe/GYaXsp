@@ -16,13 +16,14 @@ import io.vertx.kotlin.ext.sql.*
 import kotlinx.coroutines.withTimeout
 import moe.gogo.CoroutineService
 import moe.gogo.ServiceException
+import moe.gogo.ServiceRegistry
 
 class AuthServiceImpl(val dbClient: JDBCClient, val auth: JDBCAuth, context: Context) :
     CoroutineService(context), AuthService {
 
     private val log = LoggerFactory.getLogger(AuthServiceImpl::class.java)
 
-    override suspend fun start() {
+    override suspend fun start(registry: ServiceRegistry) {
         createTables()
     }
 

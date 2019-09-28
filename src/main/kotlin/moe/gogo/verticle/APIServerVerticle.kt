@@ -9,13 +9,17 @@ import io.vertx.ext.web.sstore.LocalSessionStore
 import io.vertx.kotlin.coroutines.CoroutineVerticle
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import moe.gogo.ServiceRegistry
 import moe.gogo.service.AuthService
+import moe.gogo.service.AuthServiceImpl
 
 class APIServerVerticle : CoroutineVerticle() {
 
     lateinit var restAPI: Router
 
     override suspend fun start() = coroutineScope {
+
+        val registry = ServiceRegistry.create()
 
         val dbConfig = config.getJsonObject("db_config")
         val dbClient = JDBCClient.createShared(vertx, dbConfig)
@@ -33,13 +37,14 @@ class APIServerVerticle : CoroutineVerticle() {
         }
 
         val services = listOf(
-            AuthService(dbClient, auth, context)
+            AuthService::class.java to AuthServiceImpl(dbClient, auth, context)
         )
 
-        services.forEach { service ->
+        services.forEach { (clazz, service) ->
             launch {
-                service.start()
+                service.start(registry)
                 service.route(restAPI)
+                registry[clazz] = service
             }
         }
 
