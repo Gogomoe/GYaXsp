@@ -1,6 +1,8 @@
 package moe.gogo
 
 import io.vertx.core.Context
+import io.vertx.core.impl.logging.LoggerFactory
+import io.vertx.core.json.JsonObject
 import io.vertx.ext.web.Route
 import io.vertx.ext.web.Router
 import io.vertx.ext.web.RoutingContext
@@ -10,6 +12,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 abstract class CoroutineService(val context: Context) {
+
+    companion object {
+        private val log = LoggerFactory.getLogger(CoroutineService::class.java)
+    }
 
     val coroutineScope: CoroutineScope = CoroutineScope(context.dispatcher())
 
@@ -23,16 +29,23 @@ abstract class CoroutineService(val context: Context) {
                 try {
                     fn(ctx)
                 } catch (e: Exception) {
-                    e.printStackTrace()
+                    log.error("Error in ${this::class.java.name} coroutineHandler", e)
                     ctx.fail(500, e.message ?: "Unknown service error")
                 }
             }
         }
     }
 
+    open fun RoutingContext.success(statusCode: Int = 200, jsonObject: JsonObject = JsonObject()) {
+        response().statusCode = statusCode
+        jsonObject.put("success", true)
+        end(jsonObject.encode())
+    }
+
     open fun RoutingContext.fail(statusCode: Int = 400, message: String) {
         response().statusCode = statusCode
         val obj = jsonObjectOf(
+            "success" to false,
             "error" to jsonObjectOf("message" to message)
         )
         end(obj.encode())

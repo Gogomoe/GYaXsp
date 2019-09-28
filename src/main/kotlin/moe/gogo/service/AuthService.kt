@@ -10,7 +10,6 @@ import io.vertx.ext.web.Router
 import io.vertx.ext.web.RoutingContext
 import io.vertx.kotlin.core.json.array
 import io.vertx.kotlin.core.json.json
-import io.vertx.kotlin.core.json.jsonObjectOf
 import io.vertx.kotlin.ext.auth.authenticateAwait
 import io.vertx.kotlin.ext.sql.*
 import kotlinx.coroutines.withTimeout
@@ -60,8 +59,7 @@ class AuthService(val dbClient: JDBCClient, val auth: JDBCAuth, context: Context
         val hash = auth.computeHash(password, salt)
 
         dbClient.updateWithParamsAwait("""INSERT INTO user VALUES (?, ?, ?)""", json { array(username, hash, salt) })
-        context.response().statusCode = 200
-        context.response().end(jsonObjectOf("result" to "success").encode())
+        context.success()
 
     }
 
@@ -83,16 +81,13 @@ class AuthService(val dbClient: JDBCClient, val auth: JDBCAuth, context: Context
             context.setUser(user)
             context.session()?.regenerateId()
 
-            context.response().statusCode = 200
-            context.response().end(jsonObjectOf("result" to "success").encode())
-            return
+            context.success()
 
         } catch (e: Throwable) {
             if (e.message != "Invalid username/password") {
                 log.error("Unknown error at AuthService::handleLogin", e)
             }
             context.fail(403, e.message ?: "Unknown")
-            return
         }
     }
 
