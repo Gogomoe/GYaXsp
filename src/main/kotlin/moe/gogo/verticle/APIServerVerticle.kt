@@ -9,10 +9,8 @@ import kotlinx.coroutines.coroutineScope
 import moe.gogo.Controller
 import moe.gogo.ServiceRegistry
 import moe.gogo.controller.AuthController
-import moe.gogo.service.AuthService
-import moe.gogo.service.AuthServiceImpl
-import moe.gogo.service.DatabaseService
-import moe.gogo.service.DatabaseServiceImpl
+import moe.gogo.controller.ProblemController
+import moe.gogo.service.*
 
 class APIServerVerticle : CoroutineVerticle() {
 
@@ -24,7 +22,8 @@ class APIServerVerticle : CoroutineVerticle() {
 
         val services = listOf(
             DatabaseService::class.java to DatabaseServiceImpl(),
-            AuthService::class.java to AuthServiceImpl()
+            AuthService::class.java to AuthServiceImpl(),
+            ProblemService::class.java to ProblemServiceImpl()
         )
 
         services.forEach { (clazz, service) ->
@@ -46,7 +45,8 @@ class APIServerVerticle : CoroutineVerticle() {
         }
 
         val controllers: List<Controller> = listOf(
-            AuthController(registry, context)
+            AuthController(registry, context),
+            ProblemController(registry, context)
         )
 
         controllers.forEach {

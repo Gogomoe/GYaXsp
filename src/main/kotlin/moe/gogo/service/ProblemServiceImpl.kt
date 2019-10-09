@@ -1,21 +1,19 @@
 package moe.gogo.service
 
-import io.vertx.core.Context
 import io.vertx.ext.auth.User
 import io.vertx.ext.jdbc.JDBCClient
-import io.vertx.ext.web.Router
-import io.vertx.ext.web.RoutingContext
 import io.vertx.kotlin.core.json.array
 import io.vertx.kotlin.core.json.json
-import io.vertx.kotlin.core.json.obj
 import io.vertx.kotlin.ext.auth.isAuthorizedAwait
 import io.vertx.kotlin.ext.jdbc.querySingleWithParamsAwait
 import io.vertx.kotlin.ext.sql.queryWithParamsAwait
 import io.vertx.kotlin.ext.sql.updateWithParamsAwait
-import moe.gogo.*
+import moe.gogo.ServiceException
+import moe.gogo.ServiceRegistry
 import moe.gogo.entity.Problem
+import moe.gogo.toLocalDateTime
 
-class ProblemServiceImpl(context: Context) : CoroutineService(context), ProblemService {
+class ProblemServiceImpl() : ProblemService {
 
     private lateinit var database: JDBCClient
     private lateinit var auth: AuthService
@@ -25,52 +23,7 @@ class ProblemServiceImpl(context: Context) : CoroutineService(context), ProblemS
         auth = registry[AuthService::class.java]
     }
 
-    override fun route(router: Router) {
-        router.post("/problem").coroutineHandler(::handleCreateProblem)
-        router.get("/problem/:problem_name").coroutineHandler(::handleGetProblem)
-    }
-
-    private suspend fun handleCreateProblem(context: RoutingContext) {
-
-        val params = context.request().formAttributes()
-        val problemName = params.get("problem")
-
-        try {
-            val user = context.user()
-            createProblem(user, problemName)
-
-            context.success()
-
-        } catch (e: ServiceException) {
-            context.fail(400, e.message ?: "Unknown")
-        }
-    }
-
-    private suspend fun handleGetProblem(context: RoutingContext) {
-        val problemName = context.request().getParam("problem_name")
-        try {
-            val problem = getProblem(problemName)
-            context.success(jsonObject = json {
-                obj(
-                    "problem" to obj(
-                        "name" to problem.name,
-                        "create_time" to problem.createTime.toInstant(),
-                        "edit_time" to problem.editTime.toInstant()
-                    )
-                )
-            })
-        } catch (e: ServiceException) {
-            context.fail(400, e.message ?: "Unknown")
-        }
-    }
-
-    override suspend fun createProblem(user: User?, problemName: String?) {
-        if (user == null) {
-            throw ServiceException("User is empty")
-        }
-        if (problemName == null) {
-            throw ServiceException("Problem name is empty")
-        }
+    override suspend fun createProblem(user: User, problemName: String) {
 
         if (!user.isAuthorizedAwait("role:admin")) {
             throw ServiceException("Permission denied")
@@ -94,10 +47,8 @@ class ProblemServiceImpl(context: Context) : CoroutineService(context), ProblemS
         auth.givePermission("admin", permission)
     }
 
-    override suspend fun getProblem(problemName: String?): Problem {
-        if (problemName == null) {
-            throw ServiceException("Problem name is empty")
-        }
+    override suspend fun getProblem(problemName: String): Problem {
+
         val result = database.querySingleWithParamsAwait(
             """SELECT * FROM problem WHERE problem_name = ?""",
             json { array(problemName) })
