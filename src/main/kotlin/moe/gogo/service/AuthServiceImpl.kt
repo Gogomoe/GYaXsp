@@ -30,10 +30,7 @@ class AuthServiceImpl : AuthService {
 
     override fun auth(): AuthProvider = auth
 
-    override suspend fun getUser(username: String?, password: String?): User {
-        if (username == null || password == null || username.isEmpty() || password.isEmpty()) {
-            throw ServiceException("Username or password is empty")
-        }
+    override suspend fun getUser(username: String, password: String): User {
 
         val authInfo = JsonObject().put("username", username).put("password", password)
 
@@ -47,14 +44,7 @@ class AuthServiceImpl : AuthService {
         }
     }
 
-    override suspend fun addUser(username: String?, password: String?) {
-        if (username == null || password == null || username.isEmpty() || password.isEmpty()) {
-            throw ServiceException("Username or password is empty")
-        }
-
-        if (username.length < 4 || password.length < 4) {
-            throw ServiceException("Username or password is too short")
-        }
+    override suspend fun addUser(username: String, password: String) {
 
         val sqlParams = JsonArray().add(username)
         val resultSet = dbClient.queryWithParamsAwait("""SELECT * FROM user WHERE username = ?""", sqlParams)

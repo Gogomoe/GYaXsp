@@ -26,6 +26,10 @@ class AuthController(serviceRegistry: ServiceRegistry, context: Context) : Corou
         val password = params.get("password")
 
         try {
+            if (username == null || password == null || username.isEmpty() || password.isEmpty()) {
+                throw ServiceException("Username or password is empty")
+            }
+
             val user = service.getUser(username, password)
             context.setUser(user)
             context.session()?.regenerateId()
@@ -44,6 +48,13 @@ class AuthController(serviceRegistry: ServiceRegistry, context: Context) : Corou
         val password = params.get("password")
 
         try {
+            if (username == null || password == null || username.isEmpty() || password.isEmpty()) {
+                throw ServiceException("Username or password is empty")
+            }
+            if (username.length < 4 || password.length < 4) {
+                throw ServiceException("Username or password is too short")
+            }
+
             service.addUser(username, password)
             context.success()
         } catch (e: ServiceException) {
