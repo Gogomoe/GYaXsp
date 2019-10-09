@@ -33,7 +33,7 @@ class AuthServiceImpl(context: Context) : CoroutineService(context), AuthService
 
     override fun route(router: Router) {
         router.post("/session").coroutineHandler(::handleLogin)
-        router.post("/users").coroutineHandler(::handleSinup)
+        router.post("/user").coroutineHandler(::handleSinup)
     }
 
     private suspend fun handleLogin(context: RoutingContext) {
