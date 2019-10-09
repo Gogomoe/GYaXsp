@@ -18,9 +18,11 @@ import moe.gogo.entity.Problem
 class ProblemServiceImpl(context: Context) : CoroutineService(context), ProblemService {
 
     private lateinit var database: JDBCClient
+    private lateinit var auth: AuthService
 
     override suspend fun start(registry: ServiceRegistry) {
         database = registry[DatabaseService::class.java].client()
+        auth = registry[AuthService::class.java]
     }
 
     override fun route(router: Router) {
@@ -84,6 +86,12 @@ class ProblemServiceImpl(context: Context) : CoroutineService(context), ProblemS
         database.updateWithParamsAwait(
             """INSERT INTO problem (problem_name) VALUES (?)""",
             json { array(problemName) })
+
+        val role = "problem/${problemName}/admin"
+        val permission = "problem/${problemName}/admin"
+        auth.giveRole(user, role)
+        auth.givePermission(role, permission)
+        auth.givePermission("admin", permission)
     }
 
     override suspend fun getProblem(problemName: String?): Problem {
