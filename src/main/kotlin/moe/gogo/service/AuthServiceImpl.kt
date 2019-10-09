@@ -110,7 +110,7 @@ class AuthServiceImpl : AuthService {
             """.trimIndent(),
             """ALTER TABLE user ADD CONSTRAINT pk_username PRIMARY KEY (username);""",
             """ALTER TABLE user_roles ADD CONSTRAINT pk_user_roles PRIMARY KEY (username, role);""",
-            """ALTER TABLE roles_perms ADD CONSTRAINT pk_roles_perms PRIMARY KEY (role);""",
+            """ALTER TABLE roles_perms ADD CONSTRAINT pk_roles_perms PRIMARY KEY (role, perm);""",
             """ALTER TABLE user_roles ADD CONSTRAINT fk_username FOREIGN KEY (username) REFERENCES user(username);""",
             """ALTER TABLE user_roles ADD CONSTRAINT fk_roles FOREIGN KEY (role) REFERENCES roles_perms(role);"""
         )
@@ -131,6 +131,11 @@ class AuthServiceImpl : AuthService {
                     log.info("rebuild tables")
                     connection.executeAwait("""DROP TABLE IF EXISTS user,user_roles,roles_perms""")
                     sql.forEach { connection.executeAwait(it) }
+
+                    addUser("admin", "admin")
+                    val user = getUser("admin", "admin")
+                    givePermission("admin", "admin")
+                    giveRole(user, "admin")
                 }
             }
         } ?: throw RuntimeException("AuthService setup time out")
