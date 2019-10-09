@@ -1,24 +1,21 @@
 package moe.gogo.service
 
-import io.vertx.core.Context
 import io.vertx.core.impl.logging.LoggerFactory
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
+import io.vertx.ext.auth.AuthProvider
 import io.vertx.ext.auth.User
 import io.vertx.ext.auth.jdbc.JDBCAuth
 import io.vertx.ext.jdbc.JDBCClient
-import io.vertx.ext.web.Router
-import io.vertx.ext.web.RoutingContext
 import io.vertx.kotlin.core.json.array
 import io.vertx.kotlin.core.json.json
 import io.vertx.kotlin.ext.auth.authenticateAwait
 import io.vertx.kotlin.ext.sql.*
 import kotlinx.coroutines.withTimeoutOrNull
-import moe.gogo.CoroutineService
 import moe.gogo.ServiceException
 import moe.gogo.ServiceRegistry
 
-class AuthServiceImpl(context: Context) : CoroutineService(context), AuthService {
+class AuthServiceImpl : AuthService {
 
     private val log = LoggerFactory.getLogger(AuthServiceImpl::class.java)
 
@@ -31,42 +28,7 @@ class AuthServiceImpl(context: Context) : CoroutineService(context), AuthService
         createTables()
     }
 
-    override fun route(router: Router) {
-        router.post("/session").coroutineHandler(::handleLogin)
-        router.post("/user").coroutineHandler(::handleSinup)
-    }
-
-    private suspend fun handleLogin(context: RoutingContext) {
-
-        val params = context.request().formAttributes()
-        val username = params.get("username")
-        val password = params.get("password")
-
-        try {
-            val user = getUser(username, password)
-            context.setUser(user)
-            context.session()?.regenerateId()
-
-            context.success()
-
-        } catch (e: ServiceException) {
-            context.fail(400, e.message ?: "Unknown")
-        }
-    }
-
-    private suspend fun handleSinup(context: RoutingContext) {
-
-        val params = context.request().formAttributes()
-        val username = params.get("username")
-        val password = params.get("password")
-
-        try {
-            addUser(username, password)
-            context.success()
-        } catch (e: ServiceException) {
-            context.fail(400, e.message ?: "Unknown")
-        }
-    }
+    override fun auth(): AuthProvider = auth
 
     override suspend fun getUser(username: String?, password: String?): User {
         if (username == null || password == null || username.isEmpty() || password.isEmpty()) {

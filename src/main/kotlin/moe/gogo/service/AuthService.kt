@@ -1,9 +1,12 @@
 package moe.gogo.service
 
+import io.vertx.ext.auth.AuthProvider
 import io.vertx.ext.auth.User
 import moe.gogo.Service
 
 interface AuthService : Service {
+
+    fun auth(): AuthProvider
 
     suspend fun getUser(username: String?, password: String?): User
 

@@ -4,22 +4,19 @@ import io.vertx.core.Context
 import io.vertx.core.impl.logging.LoggerFactory
 import io.vertx.core.json.JsonObject
 import io.vertx.ext.web.Route
-import io.vertx.ext.web.Router
 import io.vertx.ext.web.RoutingContext
 import io.vertx.kotlin.core.json.jsonObjectOf
 import io.vertx.kotlin.coroutines.dispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
-abstract class CoroutineService(val context: Context) : Service {
+abstract class CoroutineController(val context: Context) : Controller {
 
     companion object {
-        private val log = LoggerFactory.getLogger(CoroutineService::class.java)
+        private val log = LoggerFactory.getLogger(CoroutineController::class.java)
     }
 
     val coroutineScope: CoroutineScope = CoroutineScope(context.dispatcher())
-
-    abstract fun route(router: Router)
 
     open fun Route.coroutineHandler(fn: suspend (RoutingContext) -> Unit) {
         handler { ctx ->
@@ -48,4 +45,5 @@ abstract class CoroutineService(val context: Context) : Service {
         )
         end(obj.encode())
     }
+
 }

@@ -6,10 +6,9 @@ import io.vertx.ext.web.handler.SessionHandler
 import io.vertx.ext.web.sstore.LocalSessionStore
 import io.vertx.kotlin.coroutines.CoroutineVerticle
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
-import moe.gogo.CoroutineService
-import moe.gogo.Service
+import moe.gogo.Controller
 import moe.gogo.ServiceRegistry
+import moe.gogo.controller.AuthController
 import moe.gogo.service.AuthService
 import moe.gogo.service.AuthServiceImpl
 import moe.gogo.service.DatabaseService
@@ -23,19 +22,22 @@ class APIServerVerticle : CoroutineVerticle() {
 
         val registry = ServiceRegistry.create(vertx, context)
 
+        val services = listOf(
+            DatabaseService::class.java to DatabaseServiceImpl(),
+            AuthService::class.java to AuthServiceImpl()
+        )
+
+        services.forEach { (clazz, service) ->
+            service.start(registry)
+            registry[clazz] = service
+        }
+
         restAPI = Router.router(vertx)
-
-        val databaseService = DatabaseServiceImpl()
-        databaseService.start(registry)
-        registry[DatabaseService::class.java] = databaseService
-
-        val authService = AuthServiceImpl(context)
-        authService.start(registry)
-        registry[AuthService::class.java] = authService
 
         restAPI.route().handler(BodyHandler.create())
         restAPI.route().handler(
-            SessionHandler.create(LocalSessionStore.create(vertx)).setAuthProvider(authService.auth)
+            SessionHandler.create(LocalSessionStore.create(vertx))
+                .setAuthProvider(registry[AuthService::class.java].auth())
         )
 
         restAPI.route().handler { routingContext ->
@@ -43,16 +45,12 @@ class APIServerVerticle : CoroutineVerticle() {
             routingContext.next()
         }
 
-        authService.route(restAPI)
+        val controllers: List<Controller> = listOf(
+            AuthController(registry, context)
+        )
 
-        val services: List<Pair<Class<out Service>, CoroutineService>> = emptyList()
-
-        services.forEach { (clazz, service) ->
-            registry[clazz] = service
-            launch {
-                service.start(registry)
-                service.route(restAPI)
-            }
+        controllers.forEach {
+            it.route(restAPI)
         }
 
         Unit
