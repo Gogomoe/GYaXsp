@@ -9,4 +9,12 @@ interface AuthService : Service {
 
     suspend fun addUser(username: String?, password: String?)
 
+    suspend fun givePermission(roleName: String, permission: String)
+
+    suspend fun removePermission(roleName: String, permission: String)
+
+    suspend fun giveRole(user: User, roleName: String)
+
+    suspend fun removeRole(user: User, roleName: String)
+
 }

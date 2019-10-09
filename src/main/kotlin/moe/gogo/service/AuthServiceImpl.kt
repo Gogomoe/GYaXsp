@@ -13,7 +13,7 @@ import io.vertx.kotlin.core.json.array
 import io.vertx.kotlin.core.json.json
 import io.vertx.kotlin.ext.auth.authenticateAwait
 import io.vertx.kotlin.ext.sql.*
-import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withTimeoutOrNull
 import moe.gogo.CoroutineService
 import moe.gogo.ServiceException
 import moe.gogo.ServiceRegistry
@@ -107,6 +107,32 @@ class AuthServiceImpl(context: Context) : CoroutineService(context), AuthService
 
     }
 
+    override suspend fun givePermission(roleName: String, permission: String) {
+        dbClient.updateWithParamsAwait(
+            """INSERT INTO roles_perms VALUES (?, ?)""",
+            json { array(roleName, permission) })
+    }
+
+    override suspend fun removePermission(roleName: String, permission: String) {
+        dbClient.updateWithParamsAwait(
+            """DELETE FROM roles_perms WHERE role = '?' AND perm = '?'""",
+            json { array(roleName, permission) })
+    }
+
+    override suspend fun giveRole(user: User, roleName: String) {
+        dbClient.updateWithParamsAwait(
+            """INSERT INTO user_roles VALUES (?, ?)""",
+            json { array(user.username, roleName) })
+    }
+
+    override suspend fun removeRole(user: User, roleName: String) {
+        dbClient.updateWithParamsAwait(
+            """DELETE FROM user_roles HERE username = '?' AND role = '?'""",
+            json { array(user.username, roleName) })
+    }
+
+    private val User.username: Any?
+        get() = this.principal().getString("username")
 
     private suspend fun createTables() {
 
@@ -137,9 +163,8 @@ class AuthServiceImpl(context: Context) : CoroutineService(context), AuthService
             """ALTER TABLE user_roles ADD CONSTRAINT fk_roles FOREIGN KEY (role) REFERENCES roles_perms(role);"""
         )
 
-        withTimeout(5000) {
+        withTimeoutOrNull(5000) {
             val connection = dbClient.getConnectionAwait()
-
             val result = connection.querySingleAwait(
                 """
                 SELECT COUNT(*) FROM information_schema.TABLES WHERE
@@ -149,13 +174,13 @@ class AuthServiceImpl(context: Context) : CoroutineService(context), AuthService
                 """.trimIndent()
             )!!
             if (result.getInteger(0) == 3) {
-                return@withTimeout
+                return@withTimeoutOrNull
             } else {
                 log.info("rebuild tables")
                 connection.executeAwait("""DROP TABLE IF EXISTS user,user_roles,roles_perms""")
                 sql.forEach { connection.executeAwait(it) }
             }
-        }
+        } ?: throw RuntimeException("AuthService setup time out")
 
     }
 
