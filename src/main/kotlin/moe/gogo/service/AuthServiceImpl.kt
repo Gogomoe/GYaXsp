@@ -164,21 +164,22 @@ class AuthServiceImpl(context: Context) : CoroutineService(context), AuthService
         )
 
         withTimeoutOrNull(5000) {
-            val connection = dbClient.getConnectionAwait()
-            val result = connection.querySingleAwait(
-                """
-                SELECT COUNT(*) FROM information_schema.TABLES WHERE
-                 TABLE_NAME = 'user' or
-                 TABLE_NAME = 'user_roles' or 
-                 TABLE_NAME = 'roles_perms'
-                """.trimIndent()
-            )!!
-            if (result.getInteger(0) == 3) {
-                return@withTimeoutOrNull
-            } else {
-                log.info("rebuild tables")
-                connection.executeAwait("""DROP TABLE IF EXISTS user,user_roles,roles_perms""")
-                sql.forEach { connection.executeAwait(it) }
+            dbClient.getConnectionAwait().use { connection ->
+                val result = connection.querySingleAwait(
+                    """
+                    SELECT COUNT(*) FROM information_schema.TABLES WHERE
+                     TABLE_NAME = 'user' or
+                     TABLE_NAME = 'user_roles' or 
+                     TABLE_NAME = 'roles_perms'
+                    """.trimIndent()
+                )!!
+                if (result.getInteger(0) == 3) {
+                    return@withTimeoutOrNull
+                } else {
+                    log.info("rebuild tables")
+                    connection.executeAwait("""DROP TABLE IF EXISTS user,user_roles,roles_perms""")
+                    sql.forEach { connection.executeAwait(it) }
+                }
             }
         } ?: throw RuntimeException("AuthService setup time out")
 
