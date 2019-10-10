@@ -23,7 +23,7 @@ class ExampleServiceImpl : ExampleService {
         auth = registry[AuthService::class.java]
     }
 
-    override suspend fun createExample(user: User, problemName: String, input: String, answer: String) {
+    override suspend fun createExample(user: User, problemName: String, input: String, answer: String): Int {
         val result = database.updateWithParamsAwait(
             """INSERT INTO example (problem_name, username) VALUES (?, ?)""",
             jsonArrayOf(user.username, problemName)
@@ -32,6 +32,8 @@ class ExampleServiceImpl : ExampleService {
 
         inputFile(id).writeText(input)
         answerFile(id).writeText(answer)
+
+        return id
     }
 
     override suspend fun getExample(id: Int): Example {

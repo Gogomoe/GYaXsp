@@ -6,7 +6,7 @@ import moe.gogo.entity.Example
 
 interface ExampleService : Service {
 
-    suspend fun createExample(user: User, problemName: String, input: String, answer: String)
+    suspend fun createExample(user: User, problemName: String, input: String, answer: String): Int
 
     suspend fun getExample(id: Int): Example
 
