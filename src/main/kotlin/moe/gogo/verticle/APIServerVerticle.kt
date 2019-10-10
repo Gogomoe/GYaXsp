@@ -23,7 +23,8 @@ class APIServerVerticle : CoroutineVerticle() {
         val services = listOf(
             DatabaseService::class.java to DatabaseServiceImpl(),
             AuthService::class.java to AuthServiceImpl(),
-            ProblemService::class.java to ProblemServiceImpl()
+            ProblemService::class.java to ProblemServiceImpl(),
+            ExampleService::class.java to ExampleServiceImpl()
         )
 
         services.forEach { (clazz, service) ->
