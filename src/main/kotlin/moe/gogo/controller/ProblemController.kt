@@ -22,11 +22,13 @@ class ProblemController(registry: ServiceRegistry, context: Context) : Coroutine
 
     private suspend fun handleCreateProblem(context: RoutingContext) {
 
-        val params = context.request().formAttributes()
+        val request = context.request()
+        val params = request.formAttributes()
 
         try {
             val user = context.user() ?: throw ServiceException("User is empty")
-            val problemName = params.get("problem") ?: throw ServiceException("Problem name is empty")
+            val problemName = params.get("problem").takeIf { it.isNotEmpty() }
+                ?: throw ServiceException("Problem name is empty")
 
             service.createProblem(user, problemName)
 
@@ -38,8 +40,11 @@ class ProblemController(registry: ServiceRegistry, context: Context) : Coroutine
     }
 
     private suspend fun handleGetProblem(context: RoutingContext) {
+
+        val request = context.request()
+
         try {
-            val problemName = context.request().getParam("problem_name")
+            val problemName = request.getParam("problem_name")
                 ?: throw ServiceException("Problem name is empty")
 
             val problem = service.getProblem(problemName)
