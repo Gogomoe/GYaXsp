@@ -42,9 +42,8 @@ class ProblemServiceImpl() : ProblemService {
 
         val role = "problem/${problemName}/admin"
         val permission = "problem/${problemName}/admin"
-        auth.giveRole(user, role)
         auth.givePermission(role, permission)
-        auth.givePermission("admin", permission)
+        auth.giveRole(user, role)
     }
 
     override suspend fun getProblem(problemName: String): Problem {
