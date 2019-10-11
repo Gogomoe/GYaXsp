@@ -27,7 +27,7 @@ class ExampleServiceImpl : ExampleService {
     override suspend fun createExample(user: User, problemName: String, input: String, answer: String): Int {
         val result = database.updateWithParamsAwait(
             """INSERT INTO example (problem_name, username) VALUES (?, ?)""",
-            jsonArrayOf(user.username, problemName)
+            jsonArrayOf(problemName, user.username)
         )
         val id = result.keys.getInteger(0)
 
