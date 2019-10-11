@@ -29,8 +29,10 @@ class APIServerVerticle : CoroutineVerticle() {
         )
 
         services.forEach { (clazz, service) ->
-            service.start(registry)
             registry[clazz] = service
+        }
+        services.forEach { (_, service) ->
+            service.start(registry)
         }
 
         restAPI = Router.router(vertx)
