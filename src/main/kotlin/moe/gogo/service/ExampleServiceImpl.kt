@@ -31,6 +31,7 @@ class ExampleServiceImpl : ExampleService {
         )
         val id = result.keys.getInteger(0)
 
+        inputFile(id).parentFile.mkdirs()
         inputFile(id).writeText(input)
         answerFile(id).writeText(answer)
 
