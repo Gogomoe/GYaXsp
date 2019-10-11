@@ -1,13 +1,17 @@
 package moe.gogo.controller
 
 import io.vertx.core.Context
+import io.vertx.core.json.JsonObject
 import io.vertx.ext.web.Router
 import io.vertx.ext.web.RoutingContext
 import io.vertx.kotlin.core.json.json
+import io.vertx.kotlin.core.json.jsonArrayOf
+import io.vertx.kotlin.core.json.jsonObjectOf
 import io.vertx.kotlin.core.json.obj
 import moe.gogo.CoroutineController
 import moe.gogo.ServiceException
 import moe.gogo.ServiceRegistry
+import moe.gogo.entity.Problem
 import moe.gogo.service.ProblemService
 import moe.gogo.toInstant
 
@@ -18,6 +22,8 @@ class ProblemController(registry: ServiceRegistry, context: Context) : Coroutine
     override fun route(router: Router) {
         router.post("/problem").coroutineHandler(::handleCreateProblem)
         router.get("/problem/:problem_name").coroutineHandler(::handleGetProblem)
+        router.delete("/problem/:problem_name").coroutineHandler(::handleRemoveProblem)
+        router.get("/problems").coroutineHandler(::handleGetAllProblem)
     }
 
     private suspend fun handleCreateProblem(context: RoutingContext) {
@@ -50,16 +56,50 @@ class ProblemController(registry: ServiceRegistry, context: Context) : Coroutine
             val problem = service.getProblem(problemName)
             context.success(jsonObject = json {
                 obj(
-                    "problem" to obj(
-                        "name" to problem.name,
-                        "create_time" to problem.createTime.toInstant(),
-                        "edit_time" to problem.editTime.toInstant()
-                    )
+                    "problem" to problem.toJson()
                 )
             })
         } catch (e: ServiceException) {
             context.fail(400, e.message ?: "Unknown")
         }
     }
+
+    private suspend fun handleRemoveProblem(context: RoutingContext) {
+
+        val request = context.request()
+
+        try {
+            val user = context.user() ?: throw ServiceException("User is empty")
+            val problemName = request.getParam("problem_name")
+                ?: throw ServiceException("Problem name is empty")
+
+            service.removeProblem(user, problemName)
+
+            context.success()
+        } catch (e: ServiceException) {
+            context.fail(400, e.message ?: "Unknown")
+        }
+    }
+
+    private suspend fun handleGetAllProblem(context: RoutingContext) {
+
+        try {
+            val problems = service.getAllProblems().map { it.toJson() }
+
+            context.success(
+                jsonObject = jsonObjectOf(
+                    "problems" to jsonArrayOf(*problems.toTypedArray())
+                )
+            )
+        } catch (e: ServiceException) {
+            context.fail(400, e.message ?: "Unknown")
+        }
+    }
+
+    private fun Problem.toJson(): JsonObject = jsonObjectOf(
+        "name" to this.name,
+        "create_time" to this.createTime.toInstant(),
+        "edit_time" to this.editTime.toInstant()
+    )
 
 }

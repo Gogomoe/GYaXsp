@@ -10,4 +10,8 @@ interface ProblemService : Service {
 
     suspend fun getProblem(problemName: String): Problem
 
+    suspend fun removeProblem(user: User, problemName: String)
+
+    suspend fun getAllProblems(): List<Problem>
+
 }
