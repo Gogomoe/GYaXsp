@@ -5,6 +5,7 @@ import io.vertx.ext.jdbc.JDBCClient
 import io.vertx.kotlin.core.json.jsonArrayOf
 import io.vertx.kotlin.ext.auth.isAuthorizedAwait
 import io.vertx.kotlin.ext.sql.querySingleWithParamsAwait
+import io.vertx.kotlin.ext.sql.queryWithParamsAwait
 import io.vertx.kotlin.ext.sql.updateWithParamsAwait
 import moe.gogo.ServiceException
 import moe.gogo.ServiceRegistry
@@ -76,6 +77,25 @@ class ExampleServiceImpl : ExampleService {
         )
         inputFile(id).writeText(input)
         answerFile(id).writeText(answer)
+    }
+
+    override suspend fun getAllExamples(problemName: String): List<Example> {
+        val resultSet = database.queryWithParamsAwait(
+            """SELECT * FROM example WHERE problem_name = ?""",
+            jsonArrayOf(problemName)
+        )
+        return resultSet.results.map { result ->
+            val id = result.getInteger(0)
+            Example(
+                id,
+                result.getString(1),
+                result.getString(2),
+                inputFile(id).readText(),
+                answerFile(id).readText(),
+                result.getInstant(3).toLocalDateTime(),
+                result.getInstant(4).toLocalDateTime()
+            )
+        }
     }
 
     private suspend fun isAuthorized(user: User, example: Example): Boolean =

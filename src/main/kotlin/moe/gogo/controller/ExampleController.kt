@@ -1,12 +1,15 @@
 package moe.gogo.controller
 
 import io.vertx.core.Context
+import io.vertx.core.json.JsonObject
 import io.vertx.ext.web.Router
 import io.vertx.ext.web.RoutingContext
+import io.vertx.kotlin.core.json.jsonArrayOf
 import io.vertx.kotlin.core.json.jsonObjectOf
 import moe.gogo.CoroutineController
 import moe.gogo.ServiceException
 import moe.gogo.ServiceRegistry
+import moe.gogo.entity.Example
 import moe.gogo.service.ExampleService
 import moe.gogo.toInstant
 
@@ -19,6 +22,7 @@ class ExampleController(registry: ServiceRegistry, context: Context) : Coroutine
         router.get("/problem/:problem_name/example/:example_id").coroutineHandler(::handleGetExample)
         router.put("/problem/:problem_name/example/:example_id").coroutineHandler(::handleUpdateExample)
         router.delete("/problem/:problem_name/example/:example_id").coroutineHandler(::handleRemoveExample)
+        router.get("/problem/:problem_name/examples").coroutineHandler(::handleGetAllExamples)
     }
 
     private suspend fun handleCreateExample(context: RoutingContext) {
@@ -54,15 +58,7 @@ class ExampleController(registry: ServiceRegistry, context: Context) : Coroutine
 
             context.success(
                 jsonObject = jsonObjectOf(
-                    "example" to jsonObjectOf(
-                        "example_id" to example.id,
-                        "problem_name" to example.problem,
-                        "username" to example.username,
-                        "input" to example.input,
-                        "answer" to example.answer,
-                        "create_time" to example.createTime.toInstant(),
-                        "edit_time" to example.editTime.toInstant()
-                    )
+                    "example" to example.toJson()
                 )
             )
         } catch (e: ServiceException) {
@@ -102,6 +98,38 @@ class ExampleController(registry: ServiceRegistry, context: Context) : Coroutine
         } catch (e: ServiceException) {
             context.fail(400, e.message ?: "Unknown")
         }
+    }
+
+    private suspend fun handleGetAllExamples(context: RoutingContext) {
+        val request = context.request()
+
+        try {
+            val problemName = request.getParam("problem_name") ?: throw ServiceException("Problem name is empty")
+
+            val jsons = service.getAllExamples(problemName).map {
+                it.toJson()
+            }
+
+            context.success(
+                jsonObject = jsonObjectOf(
+                    "examples" to jsonArrayOf(*jsons.toTypedArray())
+                )
+            )
+        } catch (e: ServiceException) {
+            context.fail(400, e.message ?: "Unknown")
+        }
+    }
+
+    private fun Example.toJson(): JsonObject {
+        return jsonObjectOf(
+            "example_id" to this.id,
+            "problem_name" to this.problem,
+            "username" to this.username,
+            "input" to this.input,
+            "answer" to this.answer,
+            "create_time" to this.createTime.toInstant(),
+            "edit_time" to this.editTime.toInstant()
+        )
     }
 
 }

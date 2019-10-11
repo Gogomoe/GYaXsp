@@ -14,4 +14,6 @@ interface ExampleService : Service {
 
     suspend fun updateExample(user: User, id: Int, input: String, answer: String)
 
+    suspend fun getAllExamples(problemName: String): List<Example>
+
 }
