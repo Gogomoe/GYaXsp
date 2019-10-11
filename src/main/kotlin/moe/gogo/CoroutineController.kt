@@ -23,6 +23,8 @@ abstract class CoroutineController(val context: Context) : Controller {
             coroutineScope.launch(context.dispatcher()) {
                 try {
                     fn(ctx)
+                } catch (e: ServiceException) {
+                    ctx.fail(400, e.message ?: "Unknown")
                 } catch (e: Exception) {
                     log.error("Error in ${this::class.java.name} coroutineHandler", e)
                     ctx.fail(500, e.message ?: "Unknown service error")

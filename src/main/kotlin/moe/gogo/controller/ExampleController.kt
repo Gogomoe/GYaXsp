@@ -29,95 +29,75 @@ class ExampleController(registry: ServiceRegistry, context: Context) : Coroutine
         val request = context.request()
         val params = request.formAttributes()
 
-        try {
-            val user = context.user() ?: throw ServiceException("No user found. Please login.")
-            val problemName = request.getParam("problem_name") ?: throw ServiceException("Problem name is empty")
+        val user = context.user() ?: throw ServiceException("No user found. Please login.")
+        val problemName = request.getParam("problem_name") ?: throw ServiceException("Problem name is empty")
 
-            val input = params.get("input") ?: throw ServiceException("Input is empty")
-            val answer = params.get("answer") ?: throw ServiceException("Answer name is empty")
+        val input = params.get("input") ?: throw ServiceException("Input is empty")
+        val answer = params.get("answer") ?: throw ServiceException("Answer name is empty")
 
-            val exampleId = service.createExample(user, problemName, input, answer)
+        val exampleId = service.createExample(user, problemName, input, answer)
 
-            context.success(
-                jsonObject = jsonObjectOf(
-                    "example_id" to exampleId
-                )
+        context.success(
+            jsonObject = jsonObjectOf(
+                "example_id" to exampleId
             )
-        } catch (e: ServiceException) {
-            context.fail(400, e.message ?: "Unknown")
-        }
+        )
 
     }
 
     private suspend fun handleGetExample(context: RoutingContext) {
         val request = context.request()
 
-        try {
-            val exampleId = request.getParam("example_id")?.toInt() ?: throw ServiceException("Problem name is empty")
-            val example = service.getExample(exampleId)
+        val exampleId = request.getParam("example_id")?.toInt() ?: throw ServiceException("Problem name is empty")
+        val example = service.getExample(exampleId)
 
-            context.success(
-                jsonObject = jsonObjectOf(
-                    "example" to example.toJson()
-                )
+        context.success(
+            jsonObject = jsonObjectOf(
+                "example" to example.toJson()
             )
-        } catch (e: ServiceException) {
-            context.fail(400, e.message ?: "Unknown")
-        }
+        )
     }
 
     private suspend fun handleUpdateExample(context: RoutingContext) {
         val request = context.request()
         val params = request.formAttributes()
 
-        try {
-            val user = context.user() ?: throw ServiceException("No user found. Please login.")
-            val exampleId = request.getParam("example_id")?.toInt() ?: throw ServiceException("Problem name is empty")
+        val user = context.user() ?: throw ServiceException("No user found. Please login.")
+        val exampleId = request.getParam("example_id")?.toInt() ?: throw ServiceException("Problem name is empty")
 
-            val input = params.get("input") ?: throw ServiceException("Input is empty")
-            val answer = params.get("answer") ?: throw ServiceException("Answer name is empty")
+        val input = params.get("input") ?: throw ServiceException("Input is empty")
+        val answer = params.get("answer") ?: throw ServiceException("Answer name is empty")
 
-            service.updateExample(user, exampleId, input, answer)
+        service.updateExample(user, exampleId, input, answer)
 
-            context.success()
-        } catch (e: ServiceException) {
-            context.fail(400, e.message ?: "Unknown")
-        }
+        context.success()
     }
 
     private suspend fun handleRemoveExample(context: RoutingContext) {
         val request = context.request()
 
-        try {
-            val user = context.user() ?: throw ServiceException("No user found. Please login.")
-            val exampleId = request.getParam("example_id")?.toInt() ?: throw ServiceException("Problem name is empty")
+        val user = context.user() ?: throw ServiceException("No user found. Please login.")
+        val exampleId = request.getParam("example_id")?.toInt() ?: throw ServiceException("Problem name is empty")
 
-            service.removeExample(user, exampleId)
+        service.removeExample(user, exampleId)
 
-            context.success()
-        } catch (e: ServiceException) {
-            context.fail(400, e.message ?: "Unknown")
-        }
+        context.success()
     }
 
     private suspend fun handleGetAllExamples(context: RoutingContext) {
         val request = context.request()
 
-        try {
-            val problemName = request.getParam("problem_name") ?: throw ServiceException("Problem name is empty")
+        val problemName = request.getParam("problem_name") ?: throw ServiceException("Problem name is empty")
 
-            val jsons = service.getAllExamples(problemName).map {
-                it.toJson()
-            }
-
-            context.success(
-                jsonObject = jsonObjectOf(
-                    "examples" to jsonArrayOf(*jsons.toTypedArray())
-                )
-            )
-        } catch (e: ServiceException) {
-            context.fail(400, e.message ?: "Unknown")
+        val jsons = service.getAllExamples(problemName).map {
+            it.toJson()
         }
+
+        context.success(
+            jsonObject = jsonObjectOf(
+                "examples" to jsonArrayOf(*jsons.toTypedArray())
+            )
+        )
     }
 
     private fun Example.toJson(): JsonObject {

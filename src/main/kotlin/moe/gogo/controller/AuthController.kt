@@ -1,7 +1,6 @@
 package moe.gogo.controller
 
 import io.vertx.core.Context
-import io.vertx.core.impl.logging.LoggerFactory
 import io.vertx.ext.web.Router
 import io.vertx.ext.web.RoutingContext
 import moe.gogo.CoroutineController
@@ -11,7 +10,6 @@ import moe.gogo.service.AuthService
 
 class AuthController(serviceRegistry: ServiceRegistry, context: Context) : CoroutineController(context) {
 
-    private val log = LoggerFactory.getLogger(AuthController::class.java)
     private val service = serviceRegistry[AuthService::class.java]
 
     override fun route(router: Router) {
@@ -25,20 +23,16 @@ class AuthController(serviceRegistry: ServiceRegistry, context: Context) : Corou
         val username = params.get("username")
         val password = params.get("password")
 
-        try {
-            if (username == null || password == null || username.isEmpty() || password.isEmpty()) {
-                throw ServiceException("Username or password is empty")
-            }
-
-            val user = service.getUser(username, password)
-            context.setUser(user)
-            context.session()?.regenerateId()
-
-            context.success()
-
-        } catch (e: ServiceException) {
-            context.fail(400, e.message ?: "Unknown")
+        if (username == null || password == null || username.isEmpty() || password.isEmpty()) {
+            throw ServiceException("Username or password is empty")
         }
+
+        val user = service.getUser(username, password)
+        context.setUser(user)
+        context.session()?.regenerateId()
+
+        context.success()
+
     }
 
     private suspend fun handleSinup(context: RoutingContext) {
@@ -47,18 +41,15 @@ class AuthController(serviceRegistry: ServiceRegistry, context: Context) : Corou
         val username = params.get("username")
         val password = params.get("password")
 
-        try {
-            if (username == null || password == null || username.isEmpty() || password.isEmpty()) {
-                throw ServiceException("Username or password is empty")
-            }
-            if (username.length < 4 || password.length < 4) {
-                throw ServiceException("Username or password is too short")
-            }
-
-            service.addUser(username, password)
-            context.success()
-        } catch (e: ServiceException) {
-            context.fail(400, e.message ?: "Unknown")
+        if (username == null || password == null || username.isEmpty() || password.isEmpty()) {
+            throw ServiceException("Username or password is empty")
         }
+        if (username.length < 4 || password.length < 4) {
+            throw ServiceException("Username or password is too short")
+        }
+
+        service.addUser(username, password)
+        context.success()
+
     }
 }
