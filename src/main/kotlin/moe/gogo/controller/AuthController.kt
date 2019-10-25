@@ -28,7 +28,8 @@ class AuthController(serviceRegistry: ServiceRegistry, context: Context) : Corou
         }
 
         val user = service.getUser(username, password)
-        context.setUser(user)
+        context.setUser(user.auth)
+        context.put("user", user)
         context.session()?.regenerateId()
 
         context.success()

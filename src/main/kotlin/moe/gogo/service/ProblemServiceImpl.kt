@@ -1,11 +1,9 @@
 package moe.gogo.service
 
-import io.vertx.ext.auth.User
 import io.vertx.ext.jdbc.JDBCClient
 import io.vertx.kotlin.core.json.array
 import io.vertx.kotlin.core.json.json
 import io.vertx.kotlin.core.json.jsonArrayOf
-import io.vertx.kotlin.ext.auth.isAuthorizedAwait
 import io.vertx.kotlin.ext.jdbc.querySingleWithParamsAwait
 import io.vertx.kotlin.ext.sql.queryAwait
 import io.vertx.kotlin.ext.sql.queryWithParamsAwait
@@ -13,6 +11,7 @@ import io.vertx.kotlin.ext.sql.updateWithParamsAwait
 import moe.gogo.ServiceException
 import moe.gogo.ServiceRegistry
 import moe.gogo.entity.Problem
+import moe.gogo.entity.User
 import moe.gogo.toLocalDateTime
 
 class ProblemServiceImpl() : ProblemService {

@@ -1,23 +1,24 @@
 package moe.gogo.service
 
-import io.vertx.core.impl.logging.LoggerFactory
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import io.vertx.ext.auth.AuthProvider
-import io.vertx.ext.auth.User
 import io.vertx.ext.auth.jdbc.JDBCAuth
 import io.vertx.ext.jdbc.JDBCClient
 import io.vertx.kotlin.core.json.array
 import io.vertx.kotlin.core.json.json
+import io.vertx.kotlin.core.json.jsonArrayOf
 import io.vertx.kotlin.ext.auth.authenticateAwait
+import io.vertx.kotlin.ext.sql.querySingleWithParamsAwait
 import io.vertx.kotlin.ext.sql.queryWithParamsAwait
 import io.vertx.kotlin.ext.sql.updateWithParamsAwait
 import moe.gogo.ServiceException
 import moe.gogo.ServiceRegistry
+import moe.gogo.entity.User
+import moe.gogo.entity.UserAuth
+import moe.gogo.username
 
 class AuthServiceImpl : AuthService {
-
-    private val log = LoggerFactory.getLogger(AuthServiceImpl::class.java)
 
     lateinit var dbClient: JDBCClient
     lateinit var auth: JDBCAuth
@@ -34,13 +35,39 @@ class AuthServiceImpl : AuthService {
         val authInfo = JsonObject().put("username", username).put("password", password)
 
         try {
-            return auth.authenticateAwait(authInfo)
+
+            val userAuth = auth.authenticateAwait(authInfo)
+            return getUser(userAuth)
+
         } catch (e: Throwable) {
             if (e.message == "Invalid username/password") {
                 throw ServiceException("Invalid username/password", e)
             }
             throw e
         }
+    }
+
+    override suspend fun getUser(auth: UserAuth): User {
+        val username = auth.username
+
+        val userInfo = dbClient.querySingleWithParamsAwait(
+            """SELECT * FROM user_info WHERE username = ?""",
+            jsonArrayOf(username)
+        )!!
+        val rolePerms = dbClient.queryWithParamsAwait(
+            """SELECT RP.role, RP.perm FROM roles_perms RP, user_roles UR WHERE UR.username = ? AND UR.role = RP.role""",
+            jsonArrayOf(username)
+        )
+        val roles = rolePerms.results.map { it.getString(0) }.distinct().toList()
+        val perms = rolePerms.results.map { it.getString(1) }.distinct().toList()
+
+        return User(
+            username,
+            userInfo.getString(1),
+            auth,
+            roles,
+            perms
+        )
     }
 
     override suspend fun addUser(username: String, password: String) {
@@ -55,6 +82,7 @@ class AuthServiceImpl : AuthService {
         val hash = auth.computeHash(password, salt)
 
         dbClient.updateWithParamsAwait("""INSERT INTO user VALUES (?, ?, ?)""", json { array(username, hash, salt) })
+        dbClient.updateWithParamsAwait("""INSERT INTO user_info VALUES (?, NULL)""", jsonArrayOf(username))
 
     }
 
@@ -81,8 +109,5 @@ class AuthServiceImpl : AuthService {
             """DELETE FROM user_roles HERE username = '?' AND role = '?'""",
             json { array(user.username, roleName) })
     }
-
-    private val User.username: Any?
-        get() = this.principal().getString("username")
 
 }

@@ -1,8 +1,8 @@
 package moe.gogo.service
 
-import io.vertx.ext.auth.User
 import moe.gogo.Service
 import moe.gogo.entity.Problem
+import moe.gogo.entity.User
 
 interface ProblemService : Service {
 

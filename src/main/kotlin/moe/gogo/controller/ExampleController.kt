@@ -6,12 +6,9 @@ import io.vertx.ext.web.Router
 import io.vertx.ext.web.RoutingContext
 import io.vertx.kotlin.core.json.jsonArrayOf
 import io.vertx.kotlin.core.json.jsonObjectOf
-import moe.gogo.CoroutineController
-import moe.gogo.ServiceException
-import moe.gogo.ServiceRegistry
+import moe.gogo.*
 import moe.gogo.entity.Example
 import moe.gogo.service.ExampleService
-import moe.gogo.toInstant
 
 class ExampleController(registry: ServiceRegistry, context: Context) : CoroutineController(context) {
 
@@ -29,7 +26,7 @@ class ExampleController(registry: ServiceRegistry, context: Context) : Coroutine
         val request = context.request()
         val params = request.formAttributes()
 
-        val user = context.user() ?: throw ServiceException("No user found. Please login.")
+        val user = context.getUser() ?: throw ServiceException("No user found. Please login.")
         val problemName = request.getParam("problem_name") ?: throw ServiceException("Problem name is empty")
 
         val input = params.get("input") ?: throw ServiceException("Input is empty")
@@ -62,7 +59,7 @@ class ExampleController(registry: ServiceRegistry, context: Context) : Coroutine
         val request = context.request()
         val params = request.formAttributes()
 
-        val user = context.user() ?: throw ServiceException("No user found. Please login.")
+        val user = context.getUser() ?: throw ServiceException("No user found. Please login.")
         val exampleId = request.getParam("example_id")?.toInt() ?: throw ServiceException("Problem name is empty")
 
         val input = params.get("input") ?: throw ServiceException("Input is empty")
@@ -76,7 +73,7 @@ class ExampleController(registry: ServiceRegistry, context: Context) : Coroutine
     private suspend fun handleRemoveExample(context: RoutingContext) {
         val request = context.request()
 
-        val user = context.user() ?: throw ServiceException("No user found. Please login.")
+        val user = context.getUser() ?: throw ServiceException("No user found. Please login.")
         val exampleId = request.getParam("example_id")?.toInt() ?: throw ServiceException("Problem name is empty")
 
         service.removeExample(user, exampleId)

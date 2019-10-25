@@ -1,17 +1,15 @@
 package moe.gogo.service
 
-import io.vertx.ext.auth.User
 import io.vertx.ext.jdbc.JDBCClient
 import io.vertx.kotlin.core.json.jsonArrayOf
-import io.vertx.kotlin.ext.auth.isAuthorizedAwait
 import io.vertx.kotlin.ext.sql.querySingleWithParamsAwait
 import io.vertx.kotlin.ext.sql.queryWithParamsAwait
 import io.vertx.kotlin.ext.sql.updateWithParamsAwait
 import moe.gogo.ServiceException
 import moe.gogo.ServiceRegistry
 import moe.gogo.entity.Example
+import moe.gogo.entity.User
 import moe.gogo.toLocalDateTime
-import moe.gogo.username
 import java.io.File
 
 class ExampleServiceImpl : ExampleService {

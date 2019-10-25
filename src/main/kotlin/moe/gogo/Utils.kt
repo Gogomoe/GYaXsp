@@ -1,6 +1,8 @@
 package moe.gogo
 
-import io.vertx.ext.auth.User
+import io.vertx.ext.web.RoutingContext
+import moe.gogo.entity.User
+import moe.gogo.entity.UserAuth
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -10,5 +12,7 @@ fun LocalDateTime.toInstant(): Instant = this.atZone(ZoneOffset.systemDefault())
 
 fun Instant.toLocalDateTime(): LocalDateTime = LocalDateTime.ofInstant(this, ZoneId.systemDefault())
 
-val User.username: String
+val UserAuth.username: String
     get() = this.principal().getString("username")!!
+
+fun RoutingContext.getUser(): User? = this.get("user")
