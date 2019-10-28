@@ -9,9 +9,9 @@ interface AuthService : Service {
 
     fun auth(): AuthProvider
 
-    suspend fun getUser(username: String, password: String): User
+    suspend fun authUser(username: String, password: String): User
 
-    suspend fun getUser(auth: UserAuth): User
+    suspend fun getUser(username: String, auth: UserAuth? = null): User
 
     suspend fun addUser(username: String, password: String)
 

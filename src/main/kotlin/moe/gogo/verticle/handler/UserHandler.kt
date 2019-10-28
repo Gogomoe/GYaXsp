@@ -8,6 +8,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import moe.gogo.entity.UserAuth
 import moe.gogo.service.AuthService
+import moe.gogo.username
 
 class UserHandler(private val authService: AuthService, context: Context) : Handler<RoutingContext> {
 
@@ -21,7 +22,7 @@ class UserHandler(private val authService: AuthService, context: Context) : Hand
         }
 
         coroutineScope.launch {
-            routingContext.put("user", authService.getUser(auth))
+            routingContext.put("user", authService.getUser(auth.username, auth))
             routingContext.next()
         }
 

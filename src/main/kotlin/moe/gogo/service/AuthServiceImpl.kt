@@ -16,7 +16,6 @@ import moe.gogo.ServiceException
 import moe.gogo.ServiceRegistry
 import moe.gogo.entity.User
 import moe.gogo.entity.UserAuth
-import moe.gogo.username
 
 class AuthServiceImpl : AuthService {
 
@@ -30,14 +29,14 @@ class AuthServiceImpl : AuthService {
 
     override fun auth(): AuthProvider = auth
 
-    override suspend fun getUser(username: String, password: String): User {
+    override suspend fun authUser(username: String, password: String): User {
 
         val authInfo = JsonObject().put("username", username).put("password", password)
 
         try {
 
             val userAuth = auth.authenticateAwait(authInfo)
-            return getUser(userAuth)
+            return getUser(username, userAuth)
 
         } catch (e: Throwable) {
             if (e.message == "Invalid username/password") {
@@ -47,8 +46,7 @@ class AuthServiceImpl : AuthService {
         }
     }
 
-    override suspend fun getUser(auth: UserAuth): User {
-        val username = auth.username
+    override suspend fun getUser(username: String, auth: UserAuth?): User {
 
         val userInfo = dbClient.querySingleWithParamsAwait(
             """SELECT * FROM user_info WHERE username = ?""",

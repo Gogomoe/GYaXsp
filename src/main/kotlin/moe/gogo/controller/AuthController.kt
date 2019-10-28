@@ -27,7 +27,7 @@ class AuthController(serviceRegistry: ServiceRegistry, context: Context) : Corou
             throw ServiceException("Username or password is empty")
         }
 
-        val user = service.getUser(username, password)
+        val user = service.authUser(username, password)
         context.setUser(user.auth)
         context.put("user", user)
         context.session()?.regenerateId()
