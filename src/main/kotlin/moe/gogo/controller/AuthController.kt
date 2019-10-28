@@ -3,6 +3,9 @@ package moe.gogo.controller
 import io.vertx.core.Context
 import io.vertx.ext.web.Router
 import io.vertx.ext.web.RoutingContext
+import io.vertx.kotlin.core.json.array
+import io.vertx.kotlin.core.json.json
+import io.vertx.kotlin.core.json.jsonObjectOf
 import moe.gogo.CoroutineController
 import moe.gogo.ServiceException
 import moe.gogo.ServiceRegistry
@@ -15,6 +18,7 @@ class AuthController(serviceRegistry: ServiceRegistry, context: Context) : Corou
     override fun route(router: Router) {
         router.post("/session").coroutineHandler(::handleLogin)
         router.post("/user").coroutineHandler(::handleSinup)
+        router.get("/user/:username").coroutineHandler(::handleGetUser)
     }
 
     private suspend fun handleLogin(context: RoutingContext) {
@@ -53,4 +57,23 @@ class AuthController(serviceRegistry: ServiceRegistry, context: Context) : Corou
         context.success()
 
     }
+
+    private suspend fun handleGetUser(context: RoutingContext) {
+        val request = context.request()
+        val username = request.getParam("username") ?: throw ServiceException("Username not found")
+        val user = service.getUser(username)
+        context.success(
+            jsonObject = jsonObjectOf(
+                "user" to jsonObjectOf(
+                    "username" to user.username,
+                    "avatar" to (user.avatar ?: defaultAvatar()),
+                    "roles" to json { array(user.roles) },
+                    "perms" to json { array(user.permissions) }
+                )
+            )
+        )
+    }
+
+    private fun defaultAvatar(): String = "/avatar/default.jpg"
+
 }

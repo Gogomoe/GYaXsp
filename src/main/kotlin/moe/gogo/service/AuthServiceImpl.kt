@@ -51,7 +51,8 @@ class AuthServiceImpl : AuthService {
         val userInfo = dbClient.querySingleWithParamsAwait(
             """SELECT * FROM user_info WHERE username = ?""",
             jsonArrayOf(username)
-        )!!
+        ) ?: throw ServiceException("User does not exist")
+
         val rolePerms = dbClient.queryWithParamsAwait(
             """SELECT RP.role, RP.perm FROM roles_perms RP, user_roles UR WHERE UR.username = ? AND UR.role = RP.role""",
             jsonArrayOf(username)
