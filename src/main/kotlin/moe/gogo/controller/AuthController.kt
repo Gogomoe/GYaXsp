@@ -9,6 +9,7 @@ import io.vertx.kotlin.core.json.jsonObjectOf
 import moe.gogo.CoroutineController
 import moe.gogo.ServiceException
 import moe.gogo.ServiceRegistry
+import moe.gogo.getUser
 import moe.gogo.service.AuthService
 
 class AuthController(serviceRegistry: ServiceRegistry, context: Context) : CoroutineController(context) {
@@ -16,9 +17,32 @@ class AuthController(serviceRegistry: ServiceRegistry, context: Context) : Corou
     private val service = serviceRegistry[AuthService::class.java]
 
     override fun route(router: Router) {
+        router.get("/session").coroutineHandler(::handleGetSession)
         router.post("/session").coroutineHandler(::handleLogin)
         router.post("/user").coroutineHandler(::handleSinup)
         router.get("/user/:username").coroutineHandler(::handleGetUser)
+    }
+
+    private suspend fun handleGetSession(context: RoutingContext) {
+
+        val user = context.getUser()
+        val json = if (user == null) {
+            jsonObjectOf(
+                "session" to false
+            )
+        } else {
+            jsonObjectOf(
+                "session" to true,
+                "user" to jsonObjectOf(
+                    "username" to user.username,
+                    "avatar" to (user.avatar ?: defaultAvatar()),
+                    "roles" to json { array(user.roles) },
+                    "perms" to json { array(user.permissions) }
+                )
+            )
+        }
+
+        context.success(jsonObject = json)
     }
 
     private suspend fun handleLogin(context: RoutingContext) {
