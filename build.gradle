@@ -31,6 +31,13 @@ dependencies {
 
     compile 'mysql:mysql-connector-java:8.0.17'
 
+    testCompile 'io.kotlintest:kotlintest-runner-junit5:3.3.2'
+    testCompile 'io.vertx:vertx-web-client:4.0.0-milestone3'
+
+}
+
+test {
+    useJUnitPlatform()
 }
 
 compileKotlin {

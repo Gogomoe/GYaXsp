@@ -1,0 +1,6 @@
+{
+  "url": "jdbc:mysql://localhost:3306/gyaxsp_test?serverTimezone=UTC",
+  "driver_class": "com.mysql.cj.jdbc.Driver",
+  "user": "USER",
+  "password": "PASSWORD"
+}
