@@ -15,4 +15,4 @@ fun Instant.toLocalDateTime(): LocalDateTime = LocalDateTime.ofInstant(this, Zon
 val UserAuth.username: String
     get() = this.principal().getString("username")!!
 
-fun RoutingContext.getUser(): User? = this.get("user")
+fun RoutingContext.getUser(): User? = this.session().get("user")

@@ -7,6 +7,7 @@ import io.vertx.kotlin.coroutines.dispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import moe.gogo.entity.UserAuth
+import moe.gogo.getUser
 import moe.gogo.service.AuthService
 import moe.gogo.username
 
@@ -16,16 +17,14 @@ class UserHandler(private val authService: AuthService, context: Context) : Hand
 
     override fun handle(routingContext: RoutingContext) {
         val auth: UserAuth? = routingContext.user()
-        if (auth == null) {
+        if (auth == null || routingContext.getUser() != null) {
             routingContext.next()
             return
         }
-
         coroutineScope.launch {
-            routingContext.put("user", authService.getUser(auth.username, auth))
+            routingContext.session().put("user", authService.getUser(auth.username, auth))
             routingContext.next()
         }
-
     }
 
 }
