@@ -54,11 +54,11 @@ class AuthServiceImpl : AuthService {
         ) ?: throw ServiceException("User does not exist")
 
         val rolePerms = dbClient.queryWithParamsAwait(
-            """SELECT RP.role, RP.perm FROM roles_perms RP, user_roles UR WHERE UR.username = ? AND UR.role = RP.role""",
+            """SELECT UR.role, RP.perm FROM roles_perms RP RIGHT JOIN user_roles UR ON UR.role = RP.role WHERE UR.username = ?""",
             jsonArrayOf(username)
         )
-        val roles = rolePerms.results.map { it.getString(0) }.distinct().toList()
-        val perms = rolePerms.results.map { it.getString(1) }.distinct().toList()
+        val roles = rolePerms.results.map { it.getString(0) }.distinct().filterNotNull()
+        val perms = rolePerms.results.map { it.getString(1) }.distinct().filterNotNull()
 
         return User(
             username,
@@ -93,7 +93,7 @@ class AuthServiceImpl : AuthService {
 
     override suspend fun removePermission(roleName: String, permission: String) {
         dbClient.updateWithParamsAwait(
-            """DELETE FROM roles_perms WHERE role = '?' AND perm = '?'""",
+            """DELETE FROM roles_perms WHERE role = ? AND perm = ?""",
             json { array(roleName, permission) })
     }
 
@@ -105,7 +105,7 @@ class AuthServiceImpl : AuthService {
 
     override suspend fun removeRole(user: User, roleName: String) {
         dbClient.updateWithParamsAwait(
-            """DELETE FROM user_roles HERE username = '?' AND role = '?'""",
+            """DELETE FROM user_roles WHERE username = ? AND role = ?""",
             json { array(user.username, roleName) })
     }
 
