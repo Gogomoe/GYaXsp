@@ -12,6 +12,7 @@ import moe.gogo.controller.AuthController
 import moe.gogo.controller.ExampleController
 import moe.gogo.controller.ProblemController
 import moe.gogo.service.*
+import moe.gogo.verticle.handler.ServiceRegistryHandler
 import moe.gogo.verticle.handler.UserHandler
 
 class APIServerVerticle : CoroutineVerticle() {
@@ -44,6 +45,7 @@ class APIServerVerticle : CoroutineVerticle() {
                 .setAuthProvider(registry[AuthService::class.java].auth())
         )
         restAPI.route().handler(UserHandler(registry[AuthService::class.java], context))
+        restAPI.route().handler(ServiceRegistryHandler(registry))
 
         restAPI.route().handler { routingContext ->
             routingContext.response().putHeader("Content-Type", "application/json")
