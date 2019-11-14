@@ -19,8 +19,12 @@ interface AuthService : Service {
 
     suspend fun removePermission(roleName: String, permission: String)
 
+    suspend fun removePermissionForAll(permission: String)
+
     suspend fun giveRole(user: User, roleName: String)
 
     suspend fun removeRole(user: User, roleName: String)
+
+    suspend fun removeRoleForAll(roleName: String)
 
 }

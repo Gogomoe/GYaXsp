@@ -92,9 +92,23 @@ class AuthServiceImpl : AuthService {
     }
 
     override suspend fun removePermission(roleName: String, permission: String) {
-        dbClient.updateWithParamsAwait(
-            """DELETE FROM roles_perms WHERE role = ? AND perm = ?""",
-            json { array(roleName, permission) })
+        if (permission.endsWith("/")) {
+            val sql = """DELETE FROM roles_perms WHERE role = ? AND perm LIKE ?"""
+            dbClient.updateWithParamsAwait(sql, json { array(roleName, "$permission%") })
+        } else {
+            val sql = """DELETE FROM roles_perms WHERE role = ? AND perm = ?"""
+            dbClient.updateWithParamsAwait(sql, json { array(roleName, permission) })
+        }
+    }
+
+    override suspend fun removePermissionForAll(permission: String) {
+        if (permission.endsWith("/")) {
+            val sql = """DELETE FROM roles_perms WHERE perm LIKE ?"""
+            dbClient.updateWithParamsAwait(sql, json { array("$permission%") })
+        } else {
+            val sql = """DELETE FROM roles_perms WHERE perm = ?"""
+            dbClient.updateWithParamsAwait(sql, json { array(permission) })
+        }
     }
 
     override suspend fun giveRole(user: User, roleName: String) {
@@ -104,9 +118,28 @@ class AuthServiceImpl : AuthService {
     }
 
     override suspend fun removeRole(user: User, roleName: String) {
-        dbClient.updateWithParamsAwait(
-            """DELETE FROM user_roles WHERE username = ? AND role = ?""",
-            json { array(user.username, roleName) })
+        if (roleName.endsWith("/")) {
+            val sql = """DELETE FROM user_roles WHERE username = ? AND role LIKE ?"""
+            dbClient.updateWithParamsAwait(sql, json { array(user.username, "$roleName%") })
+        } else {
+            val sql = """DELETE FROM user_roles WHERE username = ? AND role = ?"""
+            dbClient.updateWithParamsAwait(sql, json { array(user.username, roleName) })
+        }
+    }
+
+    override suspend fun removeRoleForAll(roleName: String) {
+        if (roleName.endsWith("/")) {
+            val sql1 = """DELETE FROM roles_perms WHERE role LIKE ?"""
+            val sql2 = """DELETE FROM user_roles WHERE role LIKE ?"""
+            dbClient.updateWithParamsAwait(sql1, json { array("$roleName%") })
+            dbClient.updateWithParamsAwait(sql2, json { array("$roleName%") })
+        } else {
+            val sql1 = """DELETE FROM roles_perms WHERE role = ?"""
+            val sql2 = """DELETE FROM user_roles WHERE role = ?"""
+            dbClient.updateWithParamsAwait(sql1, json { array(roleName) })
+            dbClient.updateWithParamsAwait(sql2, json { array(roleName) })
+        }
+
     }
 
 }
