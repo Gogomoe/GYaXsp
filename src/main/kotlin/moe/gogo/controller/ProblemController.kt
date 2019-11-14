@@ -33,6 +33,7 @@ class ProblemController(registry: ServiceRegistry, context: Context) : Coroutine
             ?: throw ServiceException("Problem name is empty")
 
         service.createProblem(user, problemName)
+        context.updateUser()
 
         context.success()
 
@@ -62,6 +63,7 @@ class ProblemController(registry: ServiceRegistry, context: Context) : Coroutine
             ?: throw ServiceException("Problem name is empty")
 
         service.removeProblem(user, problemName)
+        context.updateUser()
 
         context.success()
     }
