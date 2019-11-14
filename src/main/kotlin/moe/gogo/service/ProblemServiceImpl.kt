@@ -78,6 +78,8 @@ class ProblemServiceImpl() : ProblemService {
             jsonArrayOf(problemName)
         )
 
+        auth.removePermissionForAll("problem/$problemName/")
+        auth.removeRoleForAll("problem/$problemName/")
     }
 
     override suspend fun getAllProblems(): List<Problem> {
