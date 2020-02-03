@@ -14,4 +14,6 @@ interface ProblemService : Service {
 
     suspend fun getAllProblems(): List<Problem>
 
+    suspend fun getProblems(offset: Int = 1, limit: Int = 50): List<Problem>
+
 }

@@ -3,6 +3,7 @@ package moe.gogo.service
 import io.kotlintest.Spec
 import io.kotlintest.TestCaseOrder
 import io.kotlintest.extensions.TopLevelTest
+import io.kotlintest.matchers.collections.shouldContainExactly
 import io.kotlintest.shouldBe
 import io.kotlintest.shouldThrow
 import io.kotlintest.specs.StringSpec
@@ -77,7 +78,23 @@ internal class ProblemServiceTest : StringSpec() {
             }
             updateAdmin().isAuthorizedAwait("problem/$problemName/admin") shouldBe false
         }
-
+        "get problems"{
+            val names = List(5) { "problem_${Random.nextString()}" }
+            try {
+                names.forEach { service.createProblem(admin, it) }
+                val first = service.getProblems(1, 2)
+                first.size shouldBe 2
+                first.map { it.name } shouldContainExactly listOf(names[4], names[3])
+                val second = service.getProblems(3, 2)
+                second.size shouldBe 2
+                second.map { it.name } shouldContainExactly listOf(names[2], names[1])
+                val third = service.getProblems(5, 2)
+                third.size shouldBe 1
+                third.first().name shouldBe names.first()
+            } finally {
+                names.forEach { service.removeProblem(admin, it) }
+            }
+        }
     }
 
 }

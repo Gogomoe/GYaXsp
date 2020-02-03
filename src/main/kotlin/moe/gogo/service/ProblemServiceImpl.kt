@@ -83,7 +83,20 @@ class ProblemServiceImpl() : ProblemService {
     }
 
     override suspend fun getAllProblems(): List<Problem> {
-        return database.queryAwait("""SELECT * FROM problem""").results.map {
+        return database.queryAwait("""SELECT * FROM problem ORDER BY create_time DESC""").results.map {
+            Problem(
+                it.getString(0),
+                it.getInstant(1).toLocalDateTime(),
+                it.getInstant(2).toLocalDateTime()
+            )
+        }
+    }
+
+    override suspend fun getProblems(offset: Int, limit: Int): List<Problem> {
+        return database.queryWithParamsAwait(
+            """SELECT * FROM problem ORDER BY create_time DESC LIMIT ? OFFSET ?""",
+            jsonArrayOf(limit, offset)
+        ).results.map {
             Problem(
                 it.getString(0),
                 it.getInstant(1).toLocalDateTime(),

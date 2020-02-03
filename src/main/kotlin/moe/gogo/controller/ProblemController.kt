@@ -20,7 +20,7 @@ class ProblemController(registry: ServiceRegistry, context: Context) : Coroutine
         router.post("/problem").coroutineHandler(::handleCreateProblem)
         router.get("/problem/:problem_name").coroutineHandler(::handleGetProblem)
         router.delete("/problem/:problem_name").coroutineHandler(::handleRemoveProblem)
-        router.get("/problems").coroutineHandler(::handleGetAllProblem)
+        router.get("/problems").coroutineHandler(::handleGetProblems)
     }
 
     private suspend fun handleCreateProblem(context: RoutingContext) {
@@ -68,9 +68,13 @@ class ProblemController(registry: ServiceRegistry, context: Context) : Coroutine
         context.success()
     }
 
-    private suspend fun handleGetAllProblem(context: RoutingContext) {
+    private suspend fun handleGetProblems(context: RoutingContext) {
+        val request = context.request()
+        val params = request.formAttributes()
+        val offset = params.get("offset")?.toInt() ?: 1
+        val limit = params.get("limit")?.toInt() ?: 50
 
-        val problems = service.getAllProblems().map { it.toJson() }
+        val problems = service.getProblems(offset, limit).map { it.toJson() }
 
         context.success(
             jsonObject = jsonObjectOf(
