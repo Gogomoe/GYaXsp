@@ -2,6 +2,7 @@ package moe.gogo.service
 
 import moe.gogo.Service
 import moe.gogo.entity.Problem
+import moe.gogo.entity.ProblemProfile
 import moe.gogo.entity.User
 
 interface ProblemService : Service {
@@ -14,6 +15,8 @@ interface ProblemService : Service {
 
     suspend fun getAllProblems(): List<Problem>
 
-    suspend fun getProblems(offset: Int = 1, limit: Int = 50): List<Problem>
+    suspend fun getProblems(offset: Int = 0, limit: Int = 50): List<ProblemProfile>
+
+    suspend fun getProblemsCount(): Int
 
 }

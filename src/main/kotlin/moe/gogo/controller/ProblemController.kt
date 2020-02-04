@@ -10,6 +10,7 @@ import io.vertx.kotlin.core.json.jsonObjectOf
 import io.vertx.kotlin.core.json.obj
 import moe.gogo.*
 import moe.gogo.entity.Problem
+import moe.gogo.entity.ProblemProfile
 import moe.gogo.service.ProblemService
 
 class ProblemController(registry: ServiceRegistry, context: Context) : CoroutineController(context) {
@@ -70,15 +71,16 @@ class ProblemController(registry: ServiceRegistry, context: Context) : Coroutine
 
     private suspend fun handleGetProblems(context: RoutingContext) {
         val request = context.request()
-        val params = request.formAttributes()
-        val offset = params.get("offset")?.toInt() ?: 1
-        val limit = params.get("limit")?.toInt() ?: 50
+        val offset = request.getParam("offset")?.toInt() ?: 1
+        val limit = request.getParam("limit")?.toInt() ?: 50
 
         val problems = service.getProblems(offset, limit).map { it.toJson() }
+        val count = service.getProblemsCount()
 
         context.success(
             jsonObject = jsonObjectOf(
-                "problems" to jsonArrayOf(*problems.toTypedArray())
+                "problems" to jsonArrayOf(*problems.toTypedArray()),
+                "problems_count" to count
             )
         )
     }
@@ -87,6 +89,13 @@ class ProblemController(registry: ServiceRegistry, context: Context) : Coroutine
         "name" to this.name,
         "create_time" to this.createTime.toInstant(),
         "edit_time" to this.editTime.toInstant()
+    )
+
+    private fun ProblemProfile.toJson(): JsonObject = jsonObjectOf(
+        "name" to this.name,
+        "create_time" to this.createTime.toInstant(),
+        "edit_time" to this.editTime.toInstant(),
+        "example_count" to this.exampleCount
     )
 
 }

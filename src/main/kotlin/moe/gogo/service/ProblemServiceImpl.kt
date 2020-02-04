@@ -4,6 +4,7 @@ import io.vertx.ext.jdbc.JDBCClient
 import io.vertx.kotlin.core.json.array
 import io.vertx.kotlin.core.json.json
 import io.vertx.kotlin.core.json.jsonArrayOf
+import io.vertx.kotlin.ext.jdbc.querySingleAwait
 import io.vertx.kotlin.ext.jdbc.querySingleWithParamsAwait
 import io.vertx.kotlin.ext.sql.queryAwait
 import io.vertx.kotlin.ext.sql.queryWithParamsAwait
@@ -11,10 +12,11 @@ import io.vertx.kotlin.ext.sql.updateWithParamsAwait
 import moe.gogo.ServiceException
 import moe.gogo.ServiceRegistry
 import moe.gogo.entity.Problem
+import moe.gogo.entity.ProblemProfile
 import moe.gogo.entity.User
 import moe.gogo.toLocalDateTime
 
-class ProblemServiceImpl() : ProblemService {
+class ProblemServiceImpl : ProblemService {
 
     private lateinit var database: JDBCClient
     private lateinit var auth: AuthService
@@ -92,17 +94,29 @@ class ProblemServiceImpl() : ProblemService {
         }
     }
 
-    override suspend fun getProblems(offset: Int, limit: Int): List<Problem> {
+    override suspend fun getProblems(offset: Int, limit: Int): List<ProblemProfile> {
         return database.queryWithParamsAwait(
-            """SELECT * FROM problem ORDER BY create_time DESC LIMIT ? OFFSET ?""",
+            """
+                SELECT p.*, (SELECT COUNT(e.example_id) FROM example e WHERE e.problem_name = p.problem_name) AS example_count
+                FROM problem p
+                ORDER BY create_time DESC
+                LIMIT ? OFFSET ?;
+            """.trimIndent(),
             jsonArrayOf(limit, offset)
         ).results.map {
-            Problem(
-                it.getString(0),
-                it.getInstant(1).toLocalDateTime(),
-                it.getInstant(2).toLocalDateTime()
+            ProblemProfile(
+                Problem(
+                    it.getString(0),
+                    it.getInstant(1).toLocalDateTime(),
+                    it.getInstant(2).toLocalDateTime()
+                ),
+                it.getInteger(3)
             )
         }
+    }
+
+    override suspend fun getProblemsCount(): Int {
+        return database.querySingleAwait("""SELECT COUNT(*) FROM problem""")!!.getInteger(0)
     }
 
     private suspend fun isAuthorized(user: User, problemName: String) =

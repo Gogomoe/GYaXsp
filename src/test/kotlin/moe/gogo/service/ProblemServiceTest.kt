@@ -7,10 +7,12 @@ import io.kotlintest.matchers.collections.shouldContainExactly
 import io.kotlintest.shouldBe
 import io.kotlintest.shouldThrow
 import io.kotlintest.specs.StringSpec
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import moe.gogo.ServiceException
 import moe.gogo.entity.User
 import moe.gogo.nextString
+import kotlin.properties.Delegates
 import kotlin.random.Random
 
 internal class ProblemServiceTest : StringSpec() {
@@ -20,6 +22,7 @@ internal class ProblemServiceTest : StringSpec() {
     companion object {
         lateinit var service: ProblemService
         lateinit var auth: AuthService
+        var count by Delegates.notNull<Int>()
 
         lateinit var users: Users
         lateinit var admin: User
@@ -32,6 +35,7 @@ internal class ProblemServiceTest : StringSpec() {
         val registry = Services.createServices()
         service = registry[ProblemService::class.java]
         auth = registry[AuthService::class.java]
+        count = service.getProblemsCount()
 
         users = Users.create(auth)
         admin = users.createUser("admin_${Random.nextString()}")
@@ -66,6 +70,9 @@ internal class ProblemServiceTest : StringSpec() {
         "get all problem"{
             service.getAllProblems().any { it.name == problemName } shouldBe true
         }
+        "get problems count in test"{
+            service.getProblemsCount() shouldBe count + 1
+        }
         "remove problem with no permission"{
             shouldThrow<ServiceException> {
                 service.removeProblem(noPermUser, problemName)
@@ -78,17 +85,23 @@ internal class ProblemServiceTest : StringSpec() {
             }
             updateAdmin().isAuthorizedAwait("problem/$problemName/admin") shouldBe false
         }
+        "get problems count after test"{
+            service.getProblemsCount() shouldBe count
+        }
         "get problems"{
             val names = List(5) { "problem_${Random.nextString()}" }
             try {
-                names.forEach { service.createProblem(admin, it) }
-                val first = service.getProblems(1, 2)
+                names.forEach {
+                    service.createProblem(admin, it)
+                    delay(1000)
+                }
+                val first = service.getProblems(0, 2)
                 first.size shouldBe 2
                 first.map { it.name } shouldContainExactly listOf(names[4], names[3])
-                val second = service.getProblems(3, 2)
+                val second = service.getProblems(2, 2)
                 second.size shouldBe 2
                 second.map { it.name } shouldContainExactly listOf(names[2], names[1])
-                val third = service.getProblems(5, 2)
+                val third = service.getProblems(4, 1)
                 third.size shouldBe 1
                 third.first().name shouldBe names.first()
             } finally {
